@@ -38,7 +38,7 @@ jobs:
             | jq -r '.tag_name | ltrimstr("v")')
 
           BOUNCER=$(curl -fsSL \
-            https://proxy.golang.org/github.com/hslatman/caddy-crowdsec-bouncer/http/@latest \
+            https://proxy.golang.org/github.com/hslatman/caddy-crowdsec-bouncer/@latest \
             | jq -r '.Version')
 
           test -n "$CADDY"
