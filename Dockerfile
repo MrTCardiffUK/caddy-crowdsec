@@ -1,8 +1,14 @@
-FROM caddy:2.11.7-builder-alpine AS builder
 
-RUN xcaddy build v2.11.7 \
-    --with github.com/hslatman/caddy-crowdsec-bouncer/http
+ARG CADDY_VERSION=2.11.7
 
-FROM caddy:2.11.7-alpine
+FROM caddy:${CADDY_VERSION}-builder-alpine AS builder
+
+ARG CADDY_VERSION
+ARG BOUNCER_VERSION=latest
+
+RUN xcaddy build v${CADDY_VERSION} \
+    --with github.com/hslatman/caddy-crowdsec-bouncer/http@${BOUNCER_VERSION}
+
+FROM caddy:${CADDY_VERSION}-alpine
 
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
