@@ -91,7 +91,7 @@ jobs:
             CADDY_VERSION=${{ steps.versions.outputs.caddy }}
             BOUNCER_VERSION=${{ steps.versions.outputs.bouncer }}
 
-            - name: Verify CrowdSec modules
+      - name: Verify CrowdSec modules
         if: steps.check.outputs.needed == 'true'
         run: |
           set -euo pipefail
