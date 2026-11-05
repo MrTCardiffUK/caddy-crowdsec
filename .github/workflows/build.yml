@@ -26,23 +26,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Check upstream versions
         id: versions
         shell: bash
         run: |
           set -euo pipefail
 
-          CADDY=$(curl -fsSL \
-            https://api.github.com/repos/caddyserver/caddy/releases/latest \
-            | jq -r '.tag_name | ltrimstr("v")')
+          # Get latest Caddy version available on Docker Hub
+          TAGS=$(curl -fsSL \
+            "https://hub.docker.com/v2/repositories/library/caddy/tags/?page_size=100&name=alpine")
 
+          CADDY=$(echo "$TAGS" | jq -r '
+            .results[].name
+            | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+-alpine$"))
+            | sub("-alpine$"; "")
+          ' | sort -V | tail -n 1)
+
+          test -n "$CADDY"
+
+          # Ensure both runtime and builder images exist
+          for SUFFIX in alpine builder-alpine; do
+            docker manifest inspect \
+              "caddy:${CADDY}-${SUFFIX}" >/dev/null
+          done
+
+          # Get latest CrowdSec bouncer version
           BOUNCER=$(curl -fsSL \
             https://proxy.golang.org/github.com/hslatman/caddy-crowdsec-bouncer/@latest \
             | jq -r '.Version')
 
-          test -n "$CADDY"
-          test "$CADDY" != "null"
           test -n "$BOUNCER"
           test "$BOUNCER" != "null"
 
@@ -53,6 +66,9 @@ jobs:
           echo "bouncer=$BOUNCER" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+          echo "Selected Caddy: $CADDY"
+          echo "Selected CrowdSec bouncer: $BOUNCER"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
